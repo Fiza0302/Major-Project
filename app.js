@@ -16,8 +16,7 @@ const listingsRouter=require("./routes/listing.js");
 const reviewsRouter=require("./routes/review.js");
 const userRouter=require("./routes/user.js");
 
-//const MONGO_URL = "mongodb://127.0.0.1:27017/Wanderlust";
-const dbUrl = "mongodb+srv://fizakhan75649:pzZeGX698ZLl3jBN@cluster0.jn8jjal.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+const MONGO_URL = "mongodb://127.0.0.1:27017/Wanderlust";
 
 main()
 .then( () => {
@@ -28,7 +27,7 @@ main()
 });
 
 async function main() {
-    await mongoose.connect(dbUrl);
+    await mongoose.connect(MONGO_URL);
 }  
 
 app.set("view engine" , "ejs");
@@ -39,9 +38,9 @@ app.engine("ejs", ejsMate);
 app.use(express.static(path.join(__dirname,"/public")));
 
 const store = MongoStore.create({
-    mongoUrl: dbUrl,
+    mongoUrl: MONGO_URL,
     crypto: {
-        secret : "musupersecretcode",
+        secret : "musupersecretcode",    
     },
     touchAfter:24*3600,
 });
@@ -52,7 +51,7 @@ store.on("error", () =>{
 
 const sessionOptions ={
     store,
-    secret: "mysupersecretcode",
+    secret: process.env.SECRET,
     resave: false,
     saveUninitialized: true,
     cookie :{
@@ -72,24 +71,12 @@ passport.use(new LocalStrategy(User.authenticate()));
 passport.serializeUser(User.serializeUser());
 passport.deserializeUser(User.deserializeUser());
 
-
 app.use((req, res, next) => {
     res.locals.success = req.flash("success");
     res.locals.error = req.flash("error");
     res.locals.currUser = req.user;
-    //console.log(success);
     next();
 });
-
-// app.get("/demouser", async(req, res) =>{
-// let fakeUser = new User({
-//     email : "student@gmail.com",
-//     username : "delt-student"
-// });
-
-// let registeredUser=await User.register(fakeUser,"helloworld");
-// res.send(registeredUser);
-// });
 
 app.use("/listings",listingsRouter);
 app.use("/listings/:id/reviews",reviewsRouter);
@@ -104,7 +91,6 @@ app.all("*",(req,res,next) =>{
 app.use((err,req, res, next) =>{
     let {statusCode=500,message="Something went wrong!"}=err;
     res.status(statusCode).render("err.ejs",{message});
-    //res.status(statusCode).send(message);
 });
 
 app.listen(8080, () => {
