@@ -1,3 +1,8 @@
+if(process.env.NODE_ENV!="production") {
+    require('dotenv').config();
+
+}
+
 const express = require("express");
 const app = express();
 const mongoose = require("mongoose");
@@ -16,7 +21,8 @@ const listingsRouter=require("./routes/listing.js");
 const reviewsRouter=require("./routes/review.js");
 const userRouter=require("./routes/user.js");
 
-const MONGO_URL = "mongodb://127.0.0.1:27017/Wanderlust";
+
+const MONGO_URL=process.env.ATLASDB_URL;
 
 main()
 .then( () => {
@@ -40,7 +46,7 @@ app.use(express.static(path.join(__dirname,"/public")));
 const store = MongoStore.create({
     mongoUrl: MONGO_URL,
     crypto: {
-        secret : "musupersecretcode",    
+        secret : process.env.SECRET,    
     },
     touchAfter:24*3600,
 });
@@ -91,6 +97,7 @@ app.all("*",(req,res,next) =>{
 app.use((err,req, res, next) =>{
     let {statusCode=500,message="Something went wrong!"}=err;
     res.status(statusCode).render("err.ejs",{message});
+    next();
 });
 
 app.listen(8080, () => {
